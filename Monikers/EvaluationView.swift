@@ -8,18 +8,27 @@ struct EvaluationView: View {
    @State private var ratings: [UUID: Rating] = [:]
 
    var body: some View {
-       VStack {
-           ScrollView {
-               cardsReviewList
+       ZStack {
+           // Background gradient
+           LinearGradient(gradient: Gradient(colors: [Color.orange, Color.red]),
+                          startPoint: .top, endPoint: .bottom)
+               .ignoresSafeArea()
+           VStack {
+               ScrollView {
+                   cardsReviewList
+               }
+               Button("Submit") {
+                   let good = game.selectedCards.filter { ratings[$0.id] == .good }
+                   let bad  = game.selectedCards.filter { ratings[$0.id] == .bad }
+                   game.applyEvaluation(good: good, bad: bad)
+                   presentationMode.wrappedValue.dismiss()
+               }
+               .buttonStyle(.borderedProminent)
+               .tint(.blue)
+               .controlSize(.large)
+               .padding()
+               Spacer()
            }
-           Button("Submit") {
-               let good = game.selectedCards.filter { ratings[$0.id] == .good }
-               let bad  = game.selectedCards.filter { ratings[$0.id] == .bad }
-               game.applyEvaluation(good: good, bad: bad)
-               presentationMode.wrappedValue.dismiss()
-           }
-           .buttonStyle(.borderedProminent)
-           .padding()
        }
        .navigationTitle("Review Cards")
    }
