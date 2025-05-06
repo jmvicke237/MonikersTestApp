@@ -37,7 +37,7 @@ class Game: ObservableObject {
     /// Is a turn currently active/timer running?
     @Published var isRunning: Bool = false
     /// Seconds left in the current turn.
-    @Published var timeLeft: Int = 10
+    @Published var timeLeft: Int = 60
     /// Cards reviewed as thumbs up.
     @Published var reviewedGood: [Card] = []
     /// Cards reviewed as thumbs down.
@@ -48,8 +48,8 @@ class Game: ObservableObject {
     @Published var cardsPerGame: Int = 20
     /// Toggle between base (default) and family seed decks.
     @Published var useFamilyCards: Bool = false
-    /// Duration for each turn in seconds (for testing, 10s per turn).
-    private let turnDuration: Int = 10
+    /// Duration for each turn in seconds (for testing, 60s per turn).
+    private let turnDuration: Int = 60
 
     private var timerCancellable: AnyCancellable?
     // Combine subscribers for auto-persistence
@@ -289,6 +289,9 @@ class Game: ObservableObject {
             currentDeck = selectedCards.shuffled()
             currentIndex = 0
             timeLeft = turnDuration
+        } else {
+            // Game is now over, we should prompt for review
+            hasReviewed = false
         }
     }
 
@@ -301,6 +304,11 @@ class Game: ObservableObject {
         currentDeck.remove(at: currentIndex)
         if currentDeck.isEmpty {
             endTurn()
+            // Check if this was the last round and all cards are guessed
+            if currentRound > 3 {
+                // Game is now over, we should prompt for review
+                hasReviewed = false
+            }
         } else if currentIndex >= currentDeck.count {
             currentIndex = 0
         }
@@ -336,6 +344,11 @@ class Game: ObservableObject {
     /// End the current game session early and reset to home state.
     func endGame() {
         stopTimer()
+        
+        // If game reached end state (round > 3) and hasn't been reviewed,
+        // preserve the hasReviewed flag to allow for review
+        let gameFinishedNeedsReview = currentRound > 3 && !hasReviewed
+        
         currentRound = 0
         // Clear session-specific cards and counters
         selectedCards = []
@@ -345,6 +358,10 @@ class Game: ObservableObject {
         correctThisTurn = 0
         skippedThisTurn = 0
         timeLeft = turnDuration
-        hasReviewed = false
+        
+        // Only reset hasReviewed if the game wasn't at end state
+        if !gameFinishedNeedsReview {
+            hasReviewed = false
+        }
     }
 }

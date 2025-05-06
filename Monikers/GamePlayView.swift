@@ -75,9 +75,15 @@ struct GamePlayView: View {
                 if game.currentRound > 3 {
                     if !game.hasReviewed {
                         NavigationLink("Review Cards", destination: EvaluationView(game: game))
+                            .buttonStyle(.borderedProminent)
+                            .tint(.green)
+                            .controlSize(.large)
                             .padding()
                     } else {
                         NavigationLink("Reviewed Cards", destination: ReviewedCardsView(game: game))
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
+                            .controlSize(.large)
                             .padding()
                     }
                 }
@@ -100,7 +106,11 @@ struct GamePlayView: View {
                 }
             }
             .onDisappear {
-                game.endGame()
+                // Only call endGame if we're not navigating to evaluation or review
+                // This prevents clearing the game state when going to review cards
+                if game.currentRound <= 3 || game.hasReviewed {
+                    game.endGame()
+                }
                 onEnd()
             }
         }
